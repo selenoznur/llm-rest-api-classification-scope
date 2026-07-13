@@ -47,6 +47,10 @@
             border-radius: 6px;
         }
 
+        .button:hover {
+            background: #3b434b;
+        }
+
         iframe {
             width: 100%;
             height: 850px;
@@ -75,17 +79,22 @@
 
             <a
                 class="button"
-                href="scope_description-2.pdf"
+                href="./scope_description-2.pdf"
                 target="_blank"
+                rel="noopener noreferrer"
             >
                 Open PDF
             </a>
         </header>
 
         <iframe
-            src="scope_description-2.pdf"
+            src="./scope_description-2.pdf"
             title="Scope Description PDF"
         >
+            <p>
+                Your browser cannot display the PDF.
+                <a href="./scope_description-2.pdf">Open the PDF here.</a>
+            </p>
         </iframe>
     </main>
 </body>
