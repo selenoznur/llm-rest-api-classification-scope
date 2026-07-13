@@ -1,0 +1,251 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{times}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=black,
+    citecolor=black
+}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{1.5ex plus 0.5ex minus 0.2ex}{0.8ex plus 0.2ex}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{8pt}
+
+\begin{document}
+
+% ── Title block ──────────────────────────────────────────────────────────────
+\begin{center}
+    {\Large \textbf{Automated Classification of Failed LLM-Generated\\[4pt] REST API Test Cases}}\\[10pt]
+    {\normalsize \textit{Scope Description }}\\[6pt]
+    {\normalsize Selen Öznur}\\[4pt]
+    {\normalsize University of Antwerp}\\[4pt]
+    {\normalsize July 2026}
+\end{center}
+
+\vspace{1em}
+
+% ── 1. Context ────────────────────────────────────────────────────────────────
+\section{Context}
+REST APIs are the backbone of modern cloud-native systems. Testing them
+comprehensively is challenging due to the vast input space, diverse endpoint
+behaviors, and evolving specifications. Recent work has explored the use of
+Large Language Model (LLM)-driven agents to automatically amplify existing
+test suites.
+
+A comparative study by Besjes et al.~\cite{besjes2025agentic}
+evaluated both single-agent and multi-agent LLM workflows for REST API
+test amplification across five cloud applications: Spotify, Google Drive,
+PetStore, VAmPI, and Restful-Booker. While the results were promising
+in terms of structural API coverage, a significant portion of the
+generated test cases failed. These failures were manually analyzed and
+categorized by the research team into five categories:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+    \item \textbf{Semantically Incorrect}: the test logic is fundamentally inconsistent with the endpoint's intended behavior
+    \item \textbf{Wrong Assertion}: the request is valid, but the expected outcome is incorrect
+    \item \textbf{Missing Information}: essential information is unavailable in the test environment or API documentation
+    \item \textbf{Wrong Input}: the test provides invalid, malformed, or incomplete input values
+    \item \textbf{Bug}: the test exposes behavior that contradicts the intended API behavior as defined by the OpenAPI specification
+\end{itemize}
+
+This manual classification process produced a labeled dataset of failed test cases across multiple systems and agent configurations, forming the basis of this research.
+
+% ── 2. Problem Statement ──────────────────────────────────────────────────────
+\section{Problem Statement}
+
+Manual classification of failed LLM-generated test cases is labor-intensive and does not scale. As agentic systems generate hundreds or thousands of test cases per run, the ability to automatically understand \textit{why} a test fails becomes critical for:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=3pt]
+    \item Prioritizing which failures deserve developer attention
+    \item Identifying systematic weaknesses in the LLM agent pipeline
+    \item Enabling automated repair strategies targeted at specific failure types
+\end{itemize}
+
+Prior studies have primarily focused on LLM-based test generation,
+test amplification, test repair, and the analysis of errors arising when
+REST APIs are used as LLM tools
+~\cite{wang2024softwaretesting,nooyens2025amplification,
+bandlamudi2025framework}. The automated classification of failed
+LLM-generated REST API test cases according to an existing manually
+defined taxonomy remains comparatively underexplored. This study
+investigates an approach to this classification problem.
+% ── 3. Research Questions ─────────────────────────────────────────────────────
+\section{Research Questions}
+
+\textbf{RQ1:} To what extent can an LLM-based classifier automatically reproduce the manual failure categorization of the existing labeled dataset?
+
+\textbf{RQ2:} How does the inclusion or exclusion of different input
+features, such as test code, API specification, error message, and HTTP
+method, affect failure classification performance?
+
+
+\textbf{RQ3:} How does classification performance vary across different REST APIs and failure categories?
+
+\textbf{RQ4:} How does failure classification performance vary across
+selected LLMs under consistent prompting and evaluation conditions?
+% ── 4. Approach ───────────────────────────────────────────────────────────────
+\section{Approach}
+
+The research will use the existing labeled dataset from the Test Amplification reproduction package as reference labels~\cite{testamplification}.
+ The proposed approach consists of the following steps:
+\begin{enumerate}[leftmargin=1.5em, itemsep=4pt]
+
+    \item \textbf{Dataset analysis}: Explore the distribution of failure
+    categories across systems and agent configurations. Identify class
+    imbalance and inter-system variation.
+
+ \item \textbf{Input preparation}: Extract and structure the available
+information from the reproduction package for each failed test case,
+including the test code, relevant API endpoint specification, execution
+error message, and HTTP method. System and agent-configuration metadata
+will be retained for API-level and configuration-level analysis, but will
+not be used as direct classification inputs.
+
+    \item \textbf{LLM-based classification}: Implement an automated
+    classification pipeline that accesses two selected LLMs through their
+    programming APIs. The selected model names, versions, prompts, and
+    inference parameters will be documented to support reproducibility.
+    Zero-shot, few-shot, and definition-guided prompting strategies will
+    be evaluated to classify each failed test case into one of the five
+    failure categories.~\cite{hannan2026fewshot}
+
+    \item \textbf{Feature contribution analysis}: Conduct controlled
+    feature ablation experiments to evaluate the contribution of each
+    input source. A full-input configuration containing the test code,
+    API specification, execution error message, and HTTP method will be
+    compared with configurations in which one information source is
+    removed at a time. The model, prompt template, dataset split, and
+    inference parameters will be kept constant across configurations.
+    Feature contribution will be estimated from the resulting change in
+    macro-F1 and per-category F1-scores.
+    \item \textbf{Cross-model comparison}: Compare GPT-4o mini and Claude
+Haiku 4.5 using the same dataset, prompt templates, input configurations,
+few-shot examples, and evaluation procedure. Fixed model versions will
+be used and documented to support reproducibility. The comparison will
+examine overall performance, per-category performance, and recurring
+misclassification patterns across the two models.
+
+  \item \textbf{Evaluation}: Use macro-F1 as the primary classification
+metric because the failure categories may be imbalanced. Report accuracy,
+balanced accuracy, Cohen's kappa, per-category precision, recall, and
+F1-score as complementary measures. Use confusion matrices to identify
+categories that are frequently confused. Compare feature configurations
+and selected LLMs using changes in macro-F1 and per-category F1-scores,
+and report results separately for each REST API. Finally, conduct a
+qualitative analysis of misclassified cases to identify recurring error
+patterns.
+
+\end{enumerate}
+
+% ── 5. Expected Contributions ─────────────────────────────────────────────────
+\section{Expected Contributions}
+
+\begin{enumerate}[leftmargin=1.5em, itemsep=4pt]
+
+    \item A prototype and empirical evaluation of an automated approach
+    for classifying failure modes in LLM-generated REST API test cases.
+
+    \item An empirical assessment of the contribution of different input
+    sources to failure classification performance.
+
+    \item A comparison of selected LLMs under consistent prompting and
+    evaluation conditions.
+
+    \item Insights into recurring failure patterns in the studied agentic
+    LLM test amplification workflows, which may guide future improvements
+    to agent design.
+
+\end{enumerate}
+
+% ── 6. Relation to Existing Work ──────────────────────────────────────────────
+
+\section{Relation to Existing Work}
+
+This research extends the REST API test amplification study by
+Besjes et al.~\cite{besjes2025agentic}, which produced and manually
+labeled the dataset used in this work. The present study investigates
+how this classification process can be automated.
+
+Related work by Bandlamudi et al.~\cite{bandlamudi2025framework}
+introduced an error taxonomy for REST APIs used as LLM tools. While
+their focus is API readiness for agent-based tool use, this study
+focuses on classifying failed LLM-generated REST API test cases.
+The work is also situated within the broader area of LLM-based
+software testing~\cite{wang2024softwaretesting}.
+
+% ── 7. Preliminary Planning ───────────────────────────────────────────────────
+\section{Preliminary Planning}
+
+\vspace{0.5em}
+\begin{tabular}{@{} c p{7cm} p{5cm} @{}}
+    \toprule
+    \textbf{Phase} & \textbf{Activity} & \textbf{Period} \\
+    \midrule
+    1 & Literature review + dataset familiarization & July 13--17 \\[4pt]
+    2 & Dataset analysis + feature engineering      & July 17--31 \\[4pt]
+    3 & LLM classifier design + experiments         & August 1--25 \\[4pt]
+    4 & Evaluation + qualitative analysis           & August 25 -- September 5 \\[4pt]
+    5 & research writing                              & Throughout / finalize by September 11 \\
+    \bottomrule
+\end{tabular}
+\begin{thebibliography}{9}
+\bibitem{besjes2025agentic}
+J. Besjes, R. Nooyens, T. Bardakci, M. Beyazit, and S. Demeyer,
+\href{https://arxiv.org/abs/2510.27417}
+{\textit{Agentic LLMs for REST API Test Amplification:
+A Comparative Study Across Cloud Applications}}.
+arXiv preprint arXiv:2510.27417, 2025.
+
+\bibitem{testamplification}
+\href{https://doi.org/10.5281/zenodo.19251015}
+{\textit{Reproduction Package -- A Comparative Study of Agentic LLMs
+for REST API Test Amplification}}.
+Zenodo, Version 1, 2026.
+
+\bibitem{wang2024softwaretesting}
+J. Wang, Y. Huang, C. Chen, Z. Liu, S. Wang, and Q. Wang,
+\href{https://doi.org/10.1109/TSE.2024.3368208}
+{\textit{Software Testing with Large Language Models:
+Survey, Landscape, and Vision}}.
+IEEE Transactions on Software Engineering,
+vol. 50, no. 4, pp. 911--936, 2024.
+
+\bibitem{nooyens2025amplification}
+R. Nooyens, T. Bardakci, M. Beyazit, and S. Demeyer,
+\href{https://arxiv.org/abs/2504.08113}
+{\textit{Test Amplification for REST APIs via Single and
+Multi-Agent LLM Systems}}.
+International Conference on Testing Software and Systems,
+pp. 161--177, 2025.
+
+\bibitem{hannan2026fewshot}
+M. A. Hannan, R. Ni, C. Zhang, L. Jia, R. Mangal, and C. S. Pasareanu,
+\href{https://doi.org/10.14722/last-x.2026.23025}
+{\textit{On the Difficulty of Selecting Few-Shot Examples for
+Effective LLM-based Vulnerability Detection}}.
+Workshop on LLM Assisted Security and Trust Exploration
+(LAST-X), 2026.
+
+\bibitem{bandlamudi2025framework}
+J. Bandlamudi, R. Chaudhuri, N. Gantayat, S. Ghosh,
+K. Mukherjee, P. Agarwal, R. Sindhgatta, and S. Mehta,
+\href{https://arxiv.org/abs/2504.15546}
+{\textit{A Framework for Testing and Adapting REST APIs as LLM Tools}}.
+arXiv preprint arXiv:2504.15546, 2025.
+
+
+
+\end{thebibliography}
+\end{document}
